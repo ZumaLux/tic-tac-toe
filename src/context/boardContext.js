@@ -19,9 +19,9 @@ export default function BoardContextProvider({ children }) {
     PLAYER_ONE: { name: "Player 1", score: 0, prefix: "X", picks: [] },
     PLAYER_TWO: { name: "Player 2", score: 0, prefix: "O", picks: [] },
   });
-  const rows = useRef();
-  const columns = useRef();
+  const boardSize = useRef({ rows: 0, columns: 0 });
   const playsFirst = useRef(players.current.PLAYER_ONE);
+
   const [board, setBoard] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(playsFirst.current);
   const [gameOverState, setGameOverState] = useState(false);
@@ -29,8 +29,7 @@ export default function BoardContextProvider({ children }) {
   const [winner, setWinner] = useState(null);
 
   const createInitialBoard = (_rows, _columns) => {
-    rows.current = _rows;
-    columns.current = _columns;
+    boardSize.current = { rows: _rows, columns: _columns };
     setBoard(generateEmptyBoard(_rows, _columns));
   };
 
@@ -40,14 +39,14 @@ export default function BoardContextProvider({ children }) {
     setCurrentPlayer(playsFirst.current);
     setGameOverState(false);
     setWinner(null);
-    setBoard(generateEmptyBoard(rows.current, columns.current));
+    setBoard(generateEmptyBoard(boardSize.current.rows, boardSize.current.columns));
   };
 
   const addToBoard = (cell) => {
     setBoard(
       board.map((row) => {
-        const foundBtn = row.find((btn) => btn.cell === cell);
-        if (foundBtn && foundBtn.value === "") foundBtn.value = currentPlayer.prefix;
+        const pressedButton = row.find((btn) => btn.cell === cell);
+        if (pressedButton && pressedButton.value === "") pressedButton.value = currentPlayer.prefix;
         return row;
       })
     );
@@ -56,11 +55,17 @@ export default function BoardContextProvider({ children }) {
     } else {
       players.current.PLAYER_TWO.picks.push(cell);
     }
-    switchPlayers();
+    endTurn();
   };
 
+  function endTurn() {
+    console.log(winCondition());
+    if (winCondition() || fieldsAvailable()) {
+      gameOver();
+    } else switchPlayers();
+  }
+
   function switchPlayers() {
-    winCondition();
     if (currentPlayer === players.current.PLAYER_ONE) {
       setCurrentPlayer(players.current.PLAYER_TWO);
     } else {
@@ -69,6 +74,7 @@ export default function BoardContextProvider({ children }) {
   }
 
   function winCondition() {
+    let haveWinner = false;
     winCases.forEach((wc) => {
       if (wc.every((i) => currentPlayer.picks.includes(i))) {
         if (currentPlayer === players.current.PLAYER_ONE) {
@@ -80,12 +86,24 @@ export default function BoardContextProvider({ children }) {
           setScoreboard({ ...scoreboard, scoreP2: scoreboard.scoreP2 + 1 });
           setWinner(currentPlayer);
         }
-        gameOver();
+        haveWinner = true;
       }
     });
+    return haveWinner;
+  }
+
+  function fieldsAvailable() {
+    const emptyFields = [];
+    board.map((row) => {
+      const empty = row.find((field) => field.value === "");
+      if (empty) emptyFields.push(empty);
+    });
+    if (emptyFields.length) return false;
+    else return true;
   }
 
   function gameOver() {
+    console.log("gameOver");
     setGameOverState(true);
     if (playsFirst.current === players.current.PLAYER_ONE) {
       playsFirst.current = players.current.PLAYER_TWO;
