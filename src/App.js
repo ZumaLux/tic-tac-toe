@@ -25,7 +25,7 @@ function App() {
       <Scoreboard scoreboard={scoreboard} winner={winner} />
 
       <div className="w-fit text-center">
-        <h1>{gameOverState ? "Game Over!" : currentPlayer.name + "'s turn"}</h1>
+        <h1>{gameOverState ? "Game Over!" : currentPlayer?.name + "'s turn"}</h1>
         <div className="border-4 w-fit p-2 m-3">
           {board.map((row, index) => (
             <div className="flex" key={index}>
