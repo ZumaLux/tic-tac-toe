@@ -15,7 +15,5 @@ export default function generateEmptyBoard(rows, columns) {
 
     emptyBoard.push(boardRow);
   }
-
-  console.log("GENERATE");
   return emptyBoard;
 }

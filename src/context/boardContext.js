@@ -27,10 +27,7 @@ export default function BoardContextProvider({ children }) {
   const [board, setBoard] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(playsFirst.current);
   const [gameOverState, setGameOverState] = useState(false);
-  const [scoreboard, setScoreboard] = useState([
-    { playerId: 0, score: 0 },
-    { playerId: 1, score: 0 },
-  ]);
+  const [scoreboard, setScoreboard] = useState(generateScoreboard());
   const [winner, setWinner] = useState(null);
 
   // Initial Board
@@ -38,6 +35,15 @@ export default function BoardContextProvider({ children }) {
     boardSize.current = { rows: _rows, columns: _columns };
     setBoard(generateEmptyBoard(_rows, _columns));
   };
+
+  // Generate Scoreboard
+  function generateScoreboard() {
+    return players.current.map((player) => ({
+      playerId: player.id,
+      score: player.score,
+      name: player.name,
+    }));
+  }
 
   // Reset
   const resetBoard = () => {
@@ -58,20 +64,18 @@ export default function BoardContextProvider({ children }) {
     setBoard(
       board.map((row) => {
         const pressedButton = row.find((btn) => btn.cell === cell);
-
-        if (pressedButton && pressedButton.value === "") pressedButton.value = currentPlayer.prefix;
+        // eslint-disable-next-line
+        if (pressedButton?.value == false) pressedButton.value = currentPlayer.prefix;
         return row;
       })
     );
     players.current[currentPlayer.id].picks.push(cell);
-    console.log(players.current);
-    setCurrentPlayer({ ...currentPlayer, picks: currentPlayer.picks.push(cell) });
+    setCurrentPlayer({ ...currentPlayer, picks: players.current[currentPlayer.id].picks });
     endTurn();
   };
 
   // On turn end
   function endTurn() {
-    console.log("win condition: ", winCondition());
     if (winCondition() || fieldsAvailable()) {
       gameOver();
     } else switchPlayers();
@@ -98,20 +102,20 @@ export default function BoardContextProvider({ children }) {
         };
         const newScoreboard = [...scoreboard];
         newScoreboard[currentScoreIndex] = updatedScore;
-
         setScoreboard(newScoreboard);
+
         setWinner(currentPlayer);
+        players.current[currentPlayer.id].score += 1;
         haveWinner = true;
       }
     });
-    console.log(haveWinner);
     return haveWinner;
   }
 
   // Checks if the board is full
   function fieldsAvailable() {
     const emptyFields = [];
-    board.map((row) => {
+    board.forEach((row) => {
       const empty = row.find((field) => field.value === "");
       if (empty) emptyFields.push(empty);
     });
